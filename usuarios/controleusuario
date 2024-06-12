@@ -1,0 +1,37 @@
+from br.facens.model.dao.exception import DAOexception
+from br.facens.model.entity import Usuarios
+import sqlite3
+
+class UsuariosController:
+    def verificalogin(self, email, senha):
+        if email.strip() and email:
+            usu = Usuarios(email, senha)
+            if usu.logarUsu(usu):
+                return True
+        return False
+
+    def insert(self, id, nome, email, datanascimento, cpf):
+        linhasGravadas = 0
+        if id != -1 and nome and email and datanascimento and cpf:
+            usu = Usuarios(id, nome, email, datanascimento, cpf)
+            usu.cadastrarUsuario(usu)
+        return linhasGravadas
+
+    def update(self, nome, email, datanascimento, cpf, id):
+        linhasAfetadas = 0
+        if id != -1 and nome and email and datanascimento and cpf:
+            usu = Usuarios(id, nome, email, datanascimento, cpf)
+            usu.updateUsuarioo(usu)
+        return linhasAfetadas
+
+    def delete(self, id):
+        linhasAfetadas = 0
+        if id != -1:
+            usu = Usuarios(id)
+            usu.excluirUsuario(usu)
+        return linhasAfetadas
+
+    def findAll(self):
+        return Usuarios().findAll()
+
+

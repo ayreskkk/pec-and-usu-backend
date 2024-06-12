@@ -1,0 +1,123 @@
+import sqlite3
+from tkinter import messagebox
+
+class DAOException(Exception):
+    pass
+
+class Pecas:
+    def __init__(self, codigo=None, nome=None, valor=None, quantidade=None):
+        self.codigo = codigo
+        self.nome = nome
+        self.valor = valor
+        self.quantidade = quantidade
+
+    def getCodigo(self):
+        return self.codigo
+
+    def getNome(self):
+        return self.nome
+
+    def getValor(self):
+        return self.valor
+
+    def getQuantidade(self):
+        return self.quantidade
+
+    def setCodigo(self, codigo):
+        self.codigo = codigo
+
+    def setNome(self, nome):
+        self.nome = nome
+
+    def setValor(self, valor):
+        self.valor = valor
+
+    def setQuantidade(self, quantidade):
+        self.quantidade = quantidade
+
+class PECdao:
+    def __init__(self):
+        self.conn = sqlite3.connect('database.db')
+
+    def insert(self, a):
+        linhasGravadas = 0
+        try:
+            iQuery = "INSERT INTO pecas (codigo, nome, valor, quantidade) VALUES (?, ?, ?, ?, ?)"
+            st = self.conn.cursor()
+            st.execute(iQuery, (a.getCodigo(), a.getNome(), a.getDescricao(), a.getValor(), a.getQuantidade()))
+            self.conn.commit()
+            linhasGravadas = st.rowcount
+            messagebox.showinfo("Info", "Cadastrado")
+        except sqlite3.IntegrityError as e:
+            if 'UNIQUE constraint failed' in str(e):
+                resultado = messagebox.askyesno("Erro", "Peça já cadastrada, deseja atualizar?")
+                if resultado:
+                    messagebox.showinfo("Info", "Atualizado")
+                    return self.update(a)
+                else:
+                    return 0
+        return linhasGravadas
+
+    def update(self, entidade):
+        linhasAfetadas = 0
+        try:
+            uQuery = "UPDATE peças SET nome = ?, descricao = ?, valor = ?, quantidade = ? WHERE codigo = ?"
+            st = self.conn.cursor()
+            st.execute(uQuery, (entidade.getNome(), entidade.getDescricao(), entidade.getValor(), entidade.getQuantidade(), entidade.getCodigo()))
+            self.conn.commit()
+            linhasAfetadas = st.rowcount
+        except sqlite3.Error as ex:
+            raise DAOException(f"Erro ao tentar atualizar Peça. SQLSTATE: {ex}")
+        return linhasAfetadas
+
+    def delete(self, entidade):
+        linhasAfetadas = 0
+        try:
+            delQuery = "DELETE FROM peças WHERE codigo = ?"
+            st = self.conn.cursor()
+            st.execute(delQuery, (entidade.getCodigo(),))
+            self.conn.commit()
+            linhasAfetadas = st.rowcount
+        except sqlite3.Error as ex:
+            raise DAOException(f"Erro ao tentar deletar Peça SQLSTATE: {ex}")
+        return linhasAfetadas
+
+    def findAll(self):
+        funcs = []
+        try:
+            query = "SELECT * FROM peças"
+            st = self.conn.cursor()
+            res = st.execute(query)
+            for row in res:
+                pec = Pecas()
+                pec.setCodigo(row[0])
+                pec.setNome(row[1])
+                pec.setDescricao(row[2])
+                pec.setValor(row[3])
+                pec.setQuantidade(row[4])
+                funcs.append(pec)
+        except sqlite3.Error as ex:
+            raise DAOException(f"Erro ao tentar encontrar todos as Pecas: {ex}")
+        return funcs
+
+    def findOne(self, entidade):
+        raise NotImplementedError("Not supported yet.")
+
+    def consultaPecas(self, nome):
+        pecas = []
+        try:
+            query = f"SELECT * FROM pecas WHERE nome LIKE '%{nome}%' ORDER BY nome"
+            st = self.conn.cursor()
+            res = st.execute(query)
+            for row in res:
+                pecas = Pecas()
+                pecas.setCodigo(row[0])
+                pecas.setNome(row[1])
+                pecas.setValor(row[3])
+                pecas.setQuantidade(row[4])
+                pecas.append(pecas)
+        except sqlite3.Error as e:
+            raise DAOException(f"Erro ao tentar achar curso : SQLState : {e}")
+        return Pecas
+
+
